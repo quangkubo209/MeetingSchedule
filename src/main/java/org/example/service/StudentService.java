@@ -1,6 +1,7 @@
 package org.example.service;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.example.mappers.MeetingMapper;
 import org.example.mappers.UserMapper;
@@ -8,12 +9,11 @@ import org.example.models.Meeting;
 import org.example.request.BookMeetingRequest;
 import org.example.request.CancelMeetingRequest;
 import org.example.request.ViewAvailableTimeSlotsRequest;
-import org.example.response.BookMeetingResponse;
-import org.example.response.CancelMeetingResponse;
-import org.example.response.Metadata;
-import org.example.response.ViewAvailableTimeSlotsResponse;
+import org.example.request.ViewWeeklyAppointmentsRequest;
+import org.example.response.*;
 
 import java.awt.print.Pageable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,87 +23,118 @@ public class StudentService {
 
     private UserMapper userMapper;
     private MeetingMapper meetingMapper;
+    public StudentService(MeetingMapper meetingMapper) {
+        this.meetingMapper = meetingMapper;
+    }
 
-    public ViewAvailableTimeSlotsResponse viewAvailableTimeSlots(ViewAvailableTimeSlotsRequest request) {
-        int page = (request.getPage()) - 1; // Giảm đi 1 vì PageRequest bắt đầu từ 0
-        int size = (request.getSize());
+    public  JsonObject ViewAvailableTimeSlots(ViewAvailableTimeSlotsRequest request) {
+        JsonObject response = new JsonObject();
+        String teacherName = "%" + request.getSearch() + "%"; // Cho phép tìm kiếm linh hoạt
+        int page = request.getPage();
+        int size = request.getSize();
+        String sort = request.getSort().toUpperCase();
+        int offset = (page - 1) * size;
 
-        Page<Meeting> meetingPage = meetingRepository.findAvailableTimeSlots(
-                request.getSearch(), (Pageable) PageRequest.of(page, size));
+        List<Meeting> slots = meetingMapper.findAvailableTimeSlotsByTeacher(teacherName, offset, size, sort);
 
-        List<TimeSlot> timeSlots = meetingPage.getContent().stream()
-                .map(this::mapToTimeSlot)
-                .collect(Collectors.toList());
 
-        ViewAvailableTimeSlotsResponse response = new ViewAvailableTimeSlotsResponse();
-        response.setCode("VIEW_AVAILABLE_TIME_SLOTS_OK");
-        response.setLists(timeSlots);
-        response.setMetadata(createMetadata(meetingPage));
+        int totalRows = slots.size();
+        int totalPage = (int) Math.ceil((double) totalRows / size);
+        boolean hasNextPage = page < totalPage;
+        boolean hasPreviousPage = page > 1;
+
+        return buildResponse(slots, hasNextPage, hasPreviousPage, totalPage, totalRows);
+    }
+
+    private JsonObject buildResponse(List<Meeting> slots, boolean hasNextPage, boolean hasPreviousPage, int totalPage, int totalRows) {
+        JsonObject response = new JsonObject();
+        response.addProperty("code", "VIEW_AVAILABLE_TIME_SLOTS_OK");
+
+        JsonArray listArray = getJsonElements(slots);
+        response.add("lists", listArray);
+
+        JsonObject metadata = new JsonObject();
+        metadata.addProperty("hasNextPage", hasNextPage);
+        metadata.addProperty("hasPreviousPage", hasPreviousPage);
+        metadata.addProperty("totalPage", totalPage);
+        metadata.addProperty("totalRow", totalRows);
+        response.add("metadata", metadata);
 
         return response;
     }
 
-    public ViewWeeklyAppointmentsResponse viewWeeklyAppointments(ViewWeeklyAppointmentsRequest request) {
-        int page = (request.getPage()) - 1; // Giảm đi 1 vì PageRequest bắt đầu từ 0
-        int size = (request.getSize());
+    public JsonObject viewWeeklyAppointments(ViewWeeklyAppointmentsRequest request) {
+        JsonObject response = new JsonObject();
+        LocalDateTime startTime = request.getStartTime();
+        LocalDateTime endTime = request.getEndTime();
+        int page = request.getPage();
+        int size = request.getSize();
+        String sort = request.getSort().toUpperCase();
+        int offset = (page - 1) * size;
 
-        Page<Meeting> meetingPage = meetingRepository.findWeeklyAppointments(
-                request.getStartTime(), request.getEndTime(), (Pageable) PageRequest.of(page, size));
+        List<Meeting> meetings = meetingMapper.findMeetingsForWeek(startTime, endTime, offset, size, sort);
 
-        List<TimeSlot> timeSlots = meetingPage.getContent().stream()
-                .map(this::mapToTimeSlot)
-                .collect(Collectors.toList());
+        // Giả sử bạn đã có logic để tính totalRows
+        int totalRows = meetings.size();
+        int totalPage = (int) Math.ceil((double) totalRows / size);
+        boolean hasNextPage = page < totalPage;
+        boolean hasPreviousPage = page > 1;
 
-        ViewWeeklyAppointmentsResponse response = new ViewWeeklyAppointmentsResponse();
-        response.setCode("VIEW_WEEKLY_APPOINTMENTS_OK");
-        response.setLists(timeSlots);
-        response.setMetadata(createMetadata(meetingPage));
+        return buildResponseM(meetings, hasNextPage, hasPreviousPage, totalPage, totalRows);
+    }
+
+    private JsonObject buildResponseM(List<Meeting> meetings, boolean hasNextPage, boolean hasPreviousPage, int totalPage, int totalRows) {
+        JsonObject response = new JsonObject();
+        response.addProperty("code", "VIEW_WEEKLY_APPOINTMENTS_OK");
+
+        JsonArray listArray = getJsonElements(meetings);
+        response.add("lists", listArray);
+
+        JsonObject metadata = new JsonObject();
+        metadata.addProperty("hasNextPage", hasNextPage);
+        metadata.addProperty("hasPreviousPage", hasPreviousPage);
+        metadata.addProperty("totalPage", totalPage);
+        metadata.addProperty("totalRow", totalRows);
+        response.add("metadata", metadata);
 
         return response;
     }
 
-
-    private TimeSlot mapToTimeSlot(Meeting meeting) {
-        TimeSlot timeSlot = new TimeSlot();
-        timeSlot.setMeetingId(meeting.getId());
-        timeSlot.setStartTime(meeting.getStartTime());
-        timeSlot.setEndTime(meeting.getEndTime());
-        timeSlot.setSlotType(meeting.getSlotType());
-        timeSlot.setRemainingSlot(meeting.getSlotAvailable());
-        return timeSlot;
+    private static JsonArray getJsonElements(List<Meeting> meetings) {
+        JsonArray listArray = new JsonArray();
+        for (Meeting meeting : meetings) {
+            JsonObject meetingJson = new JsonObject();
+            meetingJson.addProperty("meeting_id", meeting.getId());
+            meetingJson.addProperty("start_time", meeting.getStartTime().toString());
+            meetingJson.addProperty("end_time", meeting.getEndTime().toString());
+            meetingJson.addProperty("slot_type", meeting.getSlotType());
+            meetingJson.addProperty("remaining_slot", meeting.getSlotAvailable());
+            listArray.add(meetingJson);
+        }
+        return listArray;
     }
 
-    private Metadata createMetadata(Page<Meeting> meetingPage) {
-        Metadata metadata = new Metadata();
-        metadata.setHasNextPage(meetingPage.hasNext());
-        metadata.setHasPreviousPage(meetingPage.hasPrevious());
-        metadata.setTotalPage(meetingPage.getTotalPages());
-        metadata.setTotalRow((int) meetingPage.getTotalElements());
-        return metadata;
-    }
 
     public JsonObject bookMeeting(BookMeetingRequest request) {
-        // (logic xử lý đặt cuộc hẹn)
+        JsonObject response = new JsonObject();
+        Long meetingId = request.getMeetingId();
 
-        BookMeetingResponse response = new BookMeetingResponse();
-        response.setCode("BOOK_MEETING_CREATED");
+        meetingMapper.bookMeeting(meetingId);
+        response.addProperty("code", "BOOK_MEETING_CREATED");
 
-        // Create a Gson instance
-        Gson gson = new Gson();
-
-        // Convert BookMeetingResponse to JsonObject
-
-        return gson.toJsonTree(response).getAsJsonObject();
+        return response;
     }
 
     public JsonObject cancelMeeting(CancelMeetingRequest request) {
-        // (Thêm logic xử lý hủy cuộc hẹn ở đây)
+        JsonObject response = new JsonObject();
+        Long meetingId = request.getMeetingId();
 
-        CancelMeetingResponse response = new CancelMeetingResponse();
-        response.setCode("CANCEL_MEETING_OK");
-        Gson gson = new Gson();
+        meetingMapper.cancelMeeting(meetingId);
 
-        return gson.toJsonTree(response).getAsJsonObject();
+        response.addProperty("code", "CANCEL_MEETING_OK");
+
+
+        return response;
     }
 
 }

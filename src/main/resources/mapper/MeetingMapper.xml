@@ -1,0 +1,87 @@
+<mapper namespace="com.example.mapper.MeetingMapper">
+    <resultMap id="meetingResultMap" type="com.example.model.Meeting">
+        <id column="id" property="id" />
+        <result column="teacher_id" property="teacherId" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="slot_type" property="slotType" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="slot_available" property="slotAvailable" />
+        <result column="date" property="date" />
+
+        <!-- Cấu hình cho quan hệ Meeting 1-1 MeetingMinutes -->
+        <association property="meetingMinutes" javaType="com.example.model.MeetingMinutes">
+            <id column="minutes_id" property="id" />
+            <result column="meeting_id" property="meetingId" />
+            <result column="content" property="content" />
+            <result column="minutes_created_at" property="createdAt" />
+            <result column="minutes_updated_at" property="updatedAt" />
+        </association>
+
+        <!-- Cấu hình cho quan hệ Meeting 1-n MeetingParticipant -->
+        <collection property="participants" ofType="com.example.model.MeetingParticipant">
+            <id column="participant_id" property="id" />
+            <result column="meeting_id" property="meetingId" />
+            <result column="student_id" property="studentId" />
+        </collection>
+    </resultMap>
+
+    <!-- Các truy vấn SQL cho Meeting -->
+    <select id="getMeetingById" resultMap="meetingResultMap">
+        SELECT
+        m.*,
+        mm.id as minutes_id, mm.*,
+        mp.id as participant_id, mp.*
+        FROM meeting m
+        LEFT JOIN meeting_minutes mm ON m.id = mm.meeting_id
+        LEFT JOIN meeting_participant mp ON m.id = mp.meeting_id
+        WHERE m.id = #{id}
+    </select>
+
+    <select id="findAvailableTimeSlotsByTeacher" resultType="com.example.model.Meeting">
+        SELECT m.*
+        FROM meetings m
+        JOIN users u ON m.teacher_id = u.id
+        WHERE u.fullname LIKE #{teacherName} AND m.slot_available > 0
+        ORDER BY m.created_at ${sort}
+        OFFSET #{offset} ROWS
+        FETCH NEXT #{limit} ROWS ONLY
+    </select>
+
+    <select id="findMeetingsForWeek" resultType="com.example.model.Meeting">
+        SELECT *
+        FROM meetings
+        WHERE start_time >= #{startTime} AND end_time <= #{endTime}
+        ORDER BY created_at ${sort}
+        OFFSET #{offset} ROWS
+        FETCH NEXT #{limit} ROWS ONLY
+    </select>
+
+    <update id="bookMeeting">
+        UPDATE meetings SET /* các điều kiện cần thiết */ WHERE id = #{meetingId}
+    </update>
+
+    <update id="cancelMeeting">
+        UPDATE meetings SET /* các điều kiện cần thiết */ WHERE id = #{meetingId}
+    </update>
+
+    <select id="findMeetingsForTeacher" resultType="com.example.model.Meeting">
+        SELECT *
+        FROM meetings
+        WHERE teacher_id = #{teacherId}
+        ORDER BY created_at ${sort}
+        OFFSET #{offset} ROWS
+        FETCH NEXT #{limit} ROWS ONLY
+    </select>
+
+    <select id="findPastMeetings" resultType="com.example.model.Meeting">
+        SELECT m.*
+        FROM meetings m
+        WHERE m.teacher_id = #{teacherId} AND m.slot_type = #{meetingType}
+        AND m.end_time < CURRENT_TIMESTAMP
+                         ORDER BY m.created_at ${sort}
+        OFFSET #{offset} ROWS
+        FETCH NEXT #{limit} ROWS ONLY
+    </select>
+</mapper>

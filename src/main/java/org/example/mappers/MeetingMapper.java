@@ -1,42 +1,53 @@
-package org.example.mappers;
+package  org.example.mappers;
 
-import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 import org.example.models.Meeting;
-import org.example.models.MeetingMinutes;
-import org.example.models.User;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-@Mapper
 public interface MeetingMapper {
+    List<Meeting> findAvailableTimeSlotsByTeacher(
+            @Param("teacherName") String teacherName,
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("sort") String sort
+    );
 
-    @Select("SELECT * FROM meeting")
-    List<Meeting> getAllMeetings();
+    List<Meeting> findMeetingsForWeek(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("sort") String sort
+    );
 
-    @Select("SELECT * FROM meeting WHERE id = #{id}")
-    Optional<Meeting> getMeetingById(long id);
+    void bookMeeting(Long meetingId);
+    void cancelMeeting(Long meetingId);
 
-    @Insert("INSERT INTO meeting (teacher_id, start_time, end_time, slot_type, created_at, updated_at, slot_available, date) " +
-            "VALUES (#{teacherId}, #{startTime}, #{endTime}, #{slotType}, #{createdAt}, #{updatedAt}, #{slotAvailable}, #{date})")
-    void insertMeeting(Meeting meeting);
+    List<Meeting> findMeetingsForTeacher(
+            @Param("teacherId") Long teacherId,
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("sort") String sort
+    );
 
-    @Update("UPDATE meeting " +
-            "SET teacher_id = #{teacherId}, start_time = #{startTime}, end_time = #{endTime}, slot_type = #{slotType}, " +
-            "updated_at = #{updatedAt}, slot_available = #{slotAvailable}, date = #{date} " +
-            "WHERE id = #{id}")
-    void updateMeeting(Meeting meeting);
+    @Insert("INSERT INTO meetings (teacher_id, start_time, end_time, slot_type, slot_available, content) " +
+            "VALUES (#{meeting.teacherId}, #{meeting.startTime}, #{meeting.endTime}, #{meeting.meetingType}, #{meeting.slotAvailable}, #{meeting.content})")
+    void declareTimeSlot(@Param("meeting") Meeting meeting);
 
-    @Delete("DELETE FROM meeting WHERE id = #{id}")
-    void deleteMeeting(long id);
+    @Update("UPDATE meetings SET start_time = #{meeting.startTime}, end_time = #{meeting.endTime}, " +
+            "slot_type = #{meeting.slotType}, slot_available = #{meeting.slotAvailable} " +
+            "WHERE id = #{meeting.id} AND teacher_id = #{meeting.teacherId}")
+    void updateMeeting(@Param("meeting") Meeting meeting);
 
-    @Select("SELECT u.* FROM users u " +
-            "JOIN meeting_participant mp ON u.id = mp.student_id " +
-            "WHERE mp.meeting_id = #{meetingId}")
-    List<User> getMeetingParticipants(long meetingId);
-
-    @Select("SELECT * FROM meeting_minutes WHERE meeting_id = #{meetingId}")
-    MeetingMinutes getMeetingMinutes(long meetingId);
-
-
+    List<Meeting> findPastMeetings(
+            @Param("teacherId") Long teacherId,
+            @Param("meetingType") String meetingType,
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("sort") String sort
+    );
 }

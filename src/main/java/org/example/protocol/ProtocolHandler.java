@@ -44,7 +44,7 @@ public class ProtocolHandler {
             case "VIEW_AVAILABLE_TIME_SLOTS":
                 // Implement view available time slots logic
                 ViewAvailableTimeSlotsRequest viewAvailableTimeSlotsRequest = gson.fromJson(jsonRequest, ViewAvailableTimeSlotsRequest.class);
-                jsonResponse = studentService.viewAvailableTimeSlots(viewAvailableTimeSlotsRequest);
+                jsonResponse = studentService.ViewAvailableTimeSlots(viewAvailableTimeSlotsRequest);
                 break;
             case "VIEW_WEEKLY_APPOINTMENTS_OK":
                 ViewWeeklyAppointmentsRequest viewWeeklyAppointmentsRequest = gson.fromJson(jsonRequest, ViewWeeklyAppointmentsRequest.class);
@@ -58,24 +58,24 @@ public class ProtocolHandler {
             case "CANCEL_MEETING":
                 // Implement view available time slots logic
                 CancelMeetingRequest cancelMeetingRequest = gson.fromJson(jsonRequest, CancelMeetingRequest.class);
-                jsonResponse = studentService.bookMeeting(cancelMeetingRequest);
+                jsonResponse = studentService.cancelMeeting(cancelMeetingRequest);
                 break;
             case "VIEW_SCHEDULE":
                 // Implement view available time slots logic
                 ViewScheduleRequest viewScheduleRequest = gson.fromJson(jsonRequest, ViewScheduleRequest.class);
-                jsonResponse = studentService.bookMeeting(viewScheduleRequest);                break;
+                jsonResponse = teacherService.handleViewScheduleRequest(viewScheduleRequest);                break;
             case "DECLARE_SLOTS":
                 // Implement view available time slots logic
                 DeclareSlotsRequest declareSlotsRequest = gson.fromJson(jsonRequest, DeclareSlotsRequest.class);
-                jsonResponse = studentService.bookMeeting(declareSlotsRequest);                break;
+                jsonResponse = teacherService.declareSlot(declareSlotsRequest);                break;
             case "EDIT_MEETING":
                 // Implement view available time slots logic
                 EditMeetingRequest editMeetingRequest  = gson.fromJson(jsonRequest, EditMeetingRequest.class);
-                jsonResponse = studentService.bookMeeting(editMeetingRequest);                break;
+                jsonResponse = teacherService.editMeeting(editMeetingRequest);                break;
             case "VIEW_HISTORY_SCHEDULE":
                 // Implement view available time slots logic
                 ViewHistoryScheduleRequest viewHistoryScheduleRequest = gson.fromJson(jsonRequest, ViewHistoryScheduleRequest.class);
-                jsonResponse = studentService.bookMeeting(viewHistoryScheduleRequest);                break;
+                jsonResponse = teacherService.ViewHistorySchedu(viewHistoryScheduleRequest);                break;
 
             default:
                 // Unknown action

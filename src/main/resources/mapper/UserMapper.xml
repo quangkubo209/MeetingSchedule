@@ -1,0 +1,69 @@
+<mapper namespace="com.example.mapper.UserMapper">
+    <resultMap id="userResultMap" type="com.example.model.User">
+        <id column="id" property="id" />
+        <result column="username" property="username" />
+        <result column="password" property="password" />
+        <result column="fullname" property="fullname" />
+        <result column="role" property="role" />
+        <result column="created_at" property="createdAt" />
+
+        <!-- Cấu hình cho quan hệ User 1-n Meeting -->
+        <collection property="meetings" ofType="com.example.model.Meeting">
+            <id column="meeting_id" property="id" />
+            <result column="teacher_id" property="teacherId" />
+            <result column="start_time" property="startTime" />
+            <result column="end_time" property="endTime" />
+            <result column="slot_type" property="slotType" />
+            <result column="meeting_created_at" property="createdAt" />
+            <result column="meeting_updated_at" property="updatedAt" />
+            <result column="slot_available" property="slotAvailable" />
+            <result column="date" property="date" />
+        </collection>
+
+        <!-- Cấu hình cho quan hệ User 1-n MeetingParticipant -->
+        <collection property="meetingParticipants" ofType="com.example.model.MeetingParticipant">
+            <id column="participant_id" property="id" />
+            <result column="meeting_id" property="meetingId" />
+            <result column="student_id" property="studentId" />
+        </collection>
+
+        <!-- Cấu hình cho quan hệ User 1-n UserSessions -->
+        <collection property="userSessions" ofType="com.example.model.UserSession">
+            <id column="session_id" property="id" />
+            <result column="session_user_id" property="userId" />
+            <result column="session_key" property="sessionKey" />
+            <result column="session_created_at" property="createdAt" />
+            <result column="expires_at" property="expiresAt" />
+        </collection>
+    </resultMap>
+
+    <!-- Các truy vấn SQL cho User -->
+    <select id="getUserById" resultMap="userResultMap">
+        SELECT
+        u.*,
+        m.id as meeting_id, m.*,
+        mp.id as participant_id, mp.*,
+        us.id as session_id, us.*
+        FROM users u
+        LEFT JOIN meeting m ON u.id = m.teacher_id
+        LEFT JOIN meeting_participant mp ON u.id = mp.student_id
+        LEFT JOIN user_sessions us ON u.id = us.user_id
+        WHERE u.id = #{id}
+    </select>
+    <select id="findByUsernameAndPassword" resultMap="userResultMap" resultType="com.example.model.User">
+        SELECT * FROM users
+        WHERE username = #{username} AND password = #{password}
+    </select>
+    <!-- Bạn có thể thêm các truy vấn khác ở đây -->
+
+    <select id="existsByUsername" resultType="boolean">
+        SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <insert id="insertUser">
+        INSERT INTO users (username, password, fullname, role)
+        VALUES (#{username}, #{password}, #{fullname}, #{role}})
+    </insert>
+</mapper>

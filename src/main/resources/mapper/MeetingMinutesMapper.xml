@@ -1,0 +1,32 @@
+<mapper namespace="com.example.mapper.MeetingMinutesMapper">
+    <resultMap id="meetingMinutesResultMap" type="com.example.model.MeetingMinutes">
+        <id column="id" property="id" />
+        <result column="meeting_id" property="meetingId" />
+        <result column="content" property="content" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- Lấy thông tin MeetingMinutes theo ID -->
+    <select id="getMeetingMinutesById" resultMap="meetingMinutesResultMap">
+        SELECT * FROM meeting_minutes WHERE id = #{id}
+    </select>
+
+    <!-- Thêm mới MeetingMinutes -->
+    <insert id="insertMeetingMinutes">
+        INSERT INTO meeting_minutes (meeting_id, content, created_at, updated_at)
+        VALUES (#{meetingId}, #{content}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- Cập nhật thông tin MeetingMinutes -->
+    <update id="updateMeetingMinutes">
+        UPDATE meeting_minutes
+        SET content = #{content}, updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <!-- Xóa MeetingMinutes -->
+    <delete id="deleteMeetingMinutes">
+        DELETE FROM meeting_minutes WHERE id = #{id}
+    </delete>
+</mapper>

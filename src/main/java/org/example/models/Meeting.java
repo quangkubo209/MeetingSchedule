@@ -4,6 +4,7 @@ package org.example.models;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,11 +19,8 @@ public class Meeting {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int slotAvailable;
-    private LocalDateTime date;
-
-    private User teacher;
-    private List<MeetingParticipant> meetingParticipants;
+    private LocalDate date;
     private MeetingMinutes meetingMinutes;
-
-    // Getter and Setter methods
+    private List<MeetingParticipant> meetingParticipants;
+    // Getters và Setters
 }

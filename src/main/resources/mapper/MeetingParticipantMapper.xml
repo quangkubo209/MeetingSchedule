@@ -1,0 +1,30 @@
+<mapper namespace="com.example.mapper.MeetingParticipantMapper">
+    <resultMap id="meetingParticipantResultMap" type="com.example.model.MeetingParticipant">
+        <id column="id" property="id" />
+        <result column="meeting_id" property="meetingId" />
+        <result column="student_id" property="studentId" />
+    </resultMap>
+
+    <!-- Lấy thông tin MeetingParticipant theo ID -->
+    <select id="getMeetingParticipantById" resultMap="meetingParticipantResultMap">
+        SELECT * FROM meeting_participant WHERE id = #{id}
+    </select>
+
+    <!-- Thêm mới MeetingParticipant -->
+    <insert id="insertMeetingParticipant">
+        INSERT INTO meeting_participant (meeting_id, student_id)
+        VALUES (#{meetingId}, #{studentId})
+    </insert>
+
+    <!-- Cập nhật thông tin MeetingParticipant -->
+    <update id="updateMeetingParticipant">
+        UPDATE meeting_participant
+        SET meeting_id = #{meetingId}, student_id = #{studentId}
+        WHERE id = #{id}
+    </update>
+
+    <!-- Xóa MeetingParticipant -->
+    <delete id="deleteMeetingParticipant">
+        DELETE FROM meeting_participant WHERE id = #{id}
+    </delete>
+</mapper>

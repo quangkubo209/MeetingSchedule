@@ -9,13 +9,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class UserSessions {
-    private long id;
-    private long userId;
+    private int id;
+    private int userId;
     private String sessionKey;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
-
-    private User user;
-
-    // Getter and Setter methods
+    // Getters và Setters
 }

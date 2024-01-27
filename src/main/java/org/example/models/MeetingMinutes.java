@@ -9,13 +9,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class MeetingMinutes {
-    private long id;
-    private long meetingId;
+    private Long id;
+    private Long meetingId;
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    private Meeting meeting;
 
     // Getter and Setter methods
 }

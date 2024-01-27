@@ -1,9 +1,8 @@
 package org.example.response;
 
-import com.example.demotest.model.MeetingParticipant;
-import com.example.demotest.model.User;
-import com.example.demotest.repository.UserRepository;
-import org.apache.tomcat.jni.Local;
+
+
+import org.example.models.MeetingParticipant;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,7 +26,7 @@ public class MeetingDetails {
         this.meetingMinutes = meetingMinutes;
     }
 
-    public void setListStudent(List<MeetingParticipant> meetingParticipants, UserRepository studentRepository) {
+    public void setListStudent(ListMeetingParticipant> meetingParticipants, UserRepository studentRepository) {
         this.listStudent = mapStudentList(meetingParticipants, studentRepository);
     }
 

@@ -1,15 +1,17 @@
 package org.example.request;
 
+import lombok.extern.java.Log;
+
 // CancelMeeting Request
 public class CancelMeetingRequest {
     private String action;
-    private String meetingId;
+    private Long meetingId;
 
-    public String getMeetingId() {
+    public Long getMeetingId() {
         return meetingId;
     }
 
-    public void setMeetingId(String meetingId) {
+    public void setMeetingId(Long meetingId) {
         this.meetingId = meetingId;
     }
 

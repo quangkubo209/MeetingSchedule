@@ -6,12 +6,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MeetingParticipant {
-    private long id;
-    private long meetingId;
-    private long studentId;
-
-    private Meeting meeting;
-    private User user;
+    private int id;
+    private int meetingId;
+    private int studentId;
+    // Getters và Setters
 
     // Getter and Setter methods
 }
