@@ -58,13 +58,7 @@
         FETCH NEXT #{limit} ROWS ONLY
     </select>
 
-    <update id="bookMeeting">
-        UPDATE meetings SET /* các điều kiện cần thiết */ WHERE id = #{meetingId}
-    </update>
 
-    <update id="cancelMeeting">
-        UPDATE meetings SET /* các điều kiện cần thiết */ WHERE id = #{meetingId}
-    </update>
 
     <select id="findMeetingsForTeacher" resultType="com.example.model.Meeting">
         SELECT *
@@ -80,8 +74,39 @@
         FROM meetings m
         WHERE m.teacher_id = #{teacherId} AND m.slot_type = #{meetingType}
         AND m.end_time < CURRENT_TIMESTAMP
-                         ORDER BY m.created_at ${sort}
+        ORDER BY m.created_at ${sort}
         OFFSET #{offset} ROWS
         FETCH NEXT #{limit} ROWS ONLY
     </select>
+
+    <select id="areSlotsAvailable" resultType="boolean">
+        SELECT slot_available > 0
+        FROM meeting
+        WHERE id = #{meetingId}
+    </select>
+
+
+    <insert id="addMeetingParticipant">
+        INSERT INTO meeting_participant (meeting_id, student_id)
+        VALUES (#{meetingId}, #{studentId})
+    </insert>
+
+    <update id="increaseMeetingSlot">
+        UPDATE meeting
+        SET slot_available = slot_available + 1
+        WHERE id = #{meetingId}
+    </update>
+
+    <delete id="removeMeetingParticipant">
+        DELETE FROM meeting_participant
+        WHERE meeting_id = #{meetingId} AND student_id = #{studentId}
+    </delete>
+    <update id="bookMeeting">
+        UPDATE meeting
+        SET slot_available = false
+        WHERE id = #{meetingId}
+        AND slot_available = true
+    </update>
+
+
 </mapper>

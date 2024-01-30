@@ -1,26 +1,18 @@
 package org.example.request;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
 
-// CancelMeeting Request
+
+@Getter
+@Setter
 public class CancelMeetingRequest {
     private String action;
     private Long meetingId;
+    private Long studentId;
 
-    public Long getMeetingId() {
-        return meetingId;
-    }
 
-    public void setMeetingId(Long meetingId) {
-        this.meetingId = meetingId;
-    }
 
-    public String getAction() {
-        return action;
-    }
-
-    public void setAction(String action) {
-        this.action = action;
-    }
 // Getters and setters
 }

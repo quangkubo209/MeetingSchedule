@@ -81,8 +81,8 @@ public class UserService {
         UserSessions userSession = userSessionsMapper.findBySessionKey(request.getSession());
 
         if (userSession != null) {
-            // Hủy phiên làm việc bằng cách đặt expiresAt là thời điểm hiện tại hoặc một giá trị tương lai
-            userSession.setExpiresAt(LocalDateTime.now().plusMinutes(30)); // Ví dụ: hủy sau 30 phút
+            // Hủy phiên làm việc bằng cách đặt expiresAt là thời điểm hiện tại
+            userSession.setExpiresAt(LocalDateTime.now());
             userSessionsMapper.insertUserSession(userSession);
 
             // log out success

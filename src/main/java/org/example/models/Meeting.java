@@ -22,5 +22,6 @@ public class Meeting {
     private LocalDate date;
     private MeetingMinutes meetingMinutes;
     private List<MeetingParticipant> meetingParticipants;
+    private int weekOfSemester;
     // Getters và Setters
 }

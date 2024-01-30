@@ -12,11 +12,11 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class MeetingHandler extends Thread {
-    private final Socket clientSocket;
+    private Socket clientSocket;
     private ProtocolHandler protocolHandler;
 
-    public MeetingHandler(Socket socket) {
-        this.clientSocket = socket;
+    public MeetingHandler(Socket clientSocket){
+        this.clientSocket = clientSocket;
     }
 
     @Override
@@ -33,3 +33,4 @@ public class MeetingHandler extends Thread {
         }
     }
 }
+

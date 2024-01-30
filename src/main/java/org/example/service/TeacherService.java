@@ -101,47 +101,6 @@ public class TeacherService {
         return response;
     }
 
-    //edit meeting
-//    public EditMeetingResponse editMeeting(EditMeetingRequest request) {
-//         Long userId = request.getUserId();
-//        MeetingInformation meetingInfo = request.getMeetingInformation();
-//
-//        LocalDateTime startTime = LocalDateTime.parse(meetingInfo.getStartTime());
-//        LocalDateTime endTime = LocalDateTime.parse(meetingInfo.getEndTime());
-//
-//        Optional<Meeting> optionalMeeting = meetingMapper.getMeetingById(request.getMeetingId());
-//
-//        if (optionalMeeting.isPresent()) {
-//            Meeting meeting = optionalMeeting.get();
-//            if (meeting.getTeacherId().equals(userId)) {
-//                meeting.setStartTime(startTime);
-//                meeting.setEndTime(endTime);
-//                meeting.setSlotType(meetingInfo.getMeetingType());
-//                meeting.setSlotAvailable(meetingInfo.getSlotAvailable());
-//
-//                //xử lý xung đột thời gian với cuôc gọi khác.
-//
-//                MeetingMinutes meetingMinutes = meeting.getMeetingMinutes();
-//                if (meetingMinutes != null) {
-//                    meetingMinutes.setContent(meetingInfo.getContent());
-//                }
-//
-//                meetingMapper.insertMeeting(meeting);
-//
-//                EditMeetingResponse response = new EditMeetingResponse();
-//                response.setStatus("EDIT_MEETING_OK");
-//                response.setMessage("Meeting edited successfully");
-//                return response;
-//            } else {
-//                // unthorized
-//                return createErrorResponse("Unauthorized", "User is not authorized to edit this meeting");
-//            }
-//        } else {
-//            // not exist
-//            return createErrorResponse("Meeting Not Found", "Meeting with ID " + request.getMeetingId()+ " not found");
-//        }
-//    }
-
     public JsonObject editMeeting(EditMeetingRequest request) {
         JsonObject response = new JsonObject();
         Long teacherId = request.getUserId();
@@ -154,7 +113,6 @@ public class TeacherService {
         meeting.setSlotType(meetingInfo.getMeetingType());
         meeting.setSlotAvailable(meetingInfo.getSlotAvailable());
 
-        // Cập nhật thông tin meeting
         meetingMapper.updateMeeting(meeting);
 
         // Cập nhật thông tin MeetingMinutes
@@ -169,25 +127,6 @@ public class TeacherService {
         return response;
     }
 
-
-//    //view history  of past meeting.
-//    public ViewHistoryScheduleResponse viewHistorySchedule(ViewHistoryScheduleRequest request) {
-//        String session = request.getSession();
-//        String meetingType = request.getMeetingType();
-//        int page = request.getPage();
-//        int size = request.getSize();
-//        String sort = request.getSort();
-//
-//        // query database to get history
-//        Page<Meeting> meetingsPage = meetingRepository.findHistorySchedule(session, meetingType, (Pageable) PageRequest.of(page - 1, size, Sort.Direction.fromString(sort)));
-//
-//        ViewHistoryScheduleResponse response = new ViewHistoryScheduleResponse();
-//        response.setCode("VIEW_HISTORY_SCHEDULE_OK");
-//        response.setLists(mapMeetingInfoList(meetingsPage.getContent()));
-//        response.setMetadata(mapMetadata(meetingsPage));
-//
-//        return response;
-//    }
 public JsonObject ViewHistorySchedu(ViewHistoryScheduleRequest request) {
         JsonObject response = new JsonObject();
     Long teacherId = userSessionsMapper.getTeacherIdBySession(request.getSession());
@@ -218,8 +157,20 @@ public JsonObject ViewHistorySchedu(ViewHistoryScheduleRequest request) {
             meetingJson.addProperty("meeting_id", meeting.getId());
             meetingJson.addProperty("start_time", meeting.getStartTime().toString());
             meetingJson.addProperty("end_time", meeting.getEndTime().toString());
-            // Add list of students and meeting minutes content
-            // ...
+
+
+            List<String> participants = meetingMapper.findParticipantsByMeetingId(meeting.getId());
+            JsonArray participantArray = new JsonArray();
+            for (String studentName : participants) {
+                JsonObject studentJson = new JsonObject();
+                studentJson.addProperty("student_name", studentName);
+                participantArray.add(studentJson);
+            }
+            meetingJson.add("list_student", participantArray);
+
+            // Thêm nội dung meeting minutes
+            String meetingContent = meetingMapper.findMeetingMinutesByMeetingId(meeting.getId());
+            meetingJson.addProperty("meeting_minutes", meetingContent);
 
             listArray.add(meetingJson);
         }

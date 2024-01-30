@@ -56,7 +56,6 @@ public class ProtocolHandler {
                 jsonResponse = studentService.bookMeeting(bookMeetingRequest);
                 break;
             case "CANCEL_MEETING":
-                // Implement view available time slots logic
                 CancelMeetingRequest cancelMeetingRequest = gson.fromJson(jsonRequest, CancelMeetingRequest.class);
                 jsonResponse = studentService.cancelMeeting(cancelMeetingRequest);
                 break;

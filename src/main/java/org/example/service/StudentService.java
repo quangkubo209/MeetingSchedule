@@ -21,29 +21,32 @@ import java.util.stream.Collectors;
 
 public class StudentService {
 
-    private UserMapper userMapper;
-    private MeetingMapper meetingMapper;
-    public StudentService(MeetingMapper meetingMapper) {
+    private  final UserMapper userMapper;
+    private final MeetingMapper meetingMapper;
+    public StudentService(MeetingMapper meetingMapper, UserMapper userMapper) {
         this.meetingMapper = meetingMapper;
+        this.userMapper = userMapper;
     }
 
-    public  JsonObject ViewAvailableTimeSlots(ViewAvailableTimeSlotsRequest request) {
-        JsonObject response = new JsonObject();
-        String teacherName = "%" + request.getSearch() + "%"; // Cho phép tìm kiếm linh hoạt
-        int page = request.getPage();
-        int size = request.getSize();
-        String sort = request.getSort().toUpperCase();
-        int offset = (page - 1) * size;
+    public JsonObject ViewAvailableTimeSlots(ViewAvailableTimeSlotsRequest request) {
+        try {
+            String teacherName = "%" + request.getSearch() + "%";
+            int page = request.getPage();
+            int size = request.getSize();
+            String sort = request.getSort().toUpperCase();
+            int offset = (page - 1) * size;
+            List<Meeting> slots = meetingMapper.findAvailableTimeSlotsByTeacher(teacherName, offset, size, sort);
 
-        List<Meeting> slots = meetingMapper.findAvailableTimeSlotsByTeacher(teacherName, offset, size, sort);
+            int totalRows = slots.size();
+            int totalPage = (int) Math.ceil((double) totalRows / size);
+            boolean hasNextPage = page < totalPage;
+            boolean hasPreviousPage = page > 1;
 
-
-        int totalRows = slots.size();
-        int totalPage = (int) Math.ceil((double) totalRows / size);
-        boolean hasNextPage = page < totalPage;
-        boolean hasPreviousPage = page > 1;
-
-        return buildResponse(slots, hasNextPage, hasPreviousPage, totalPage, totalRows);
+            return buildResponse(slots, hasNextPage, hasPreviousPage, totalPage, totalRows);
+        } catch (Exception e) {
+            // Handle the database error and return an error response
+            return buildErrorResponse("VIEW_AVAILABLE_TIME_SLOTS_ERROR", "Error fetching available time slots from the database.");
+        }
     }
 
     private JsonObject buildResponse(List<Meeting> slots, boolean hasNextPage, boolean hasPreviousPage, int totalPage, int totalRows) {
@@ -64,23 +67,26 @@ public class StudentService {
     }
 
     public JsonObject viewWeeklyAppointments(ViewWeeklyAppointmentsRequest request) {
-        JsonObject response = new JsonObject();
-        LocalDateTime startTime = request.getStartTime();
-        LocalDateTime endTime = request.getEndTime();
-        int page = request.getPage();
-        int size = request.getSize();
-        String sort = request.getSort().toUpperCase();
-        int offset = (page - 1) * size;
+        try {
+            LocalDateTime startTime = request.getStartTime();
+            LocalDateTime endTime = request.getEndTime();
+            int page = request.getPage();
+            int size = request.getSize();
+            String sort = request.getSort().toUpperCase();
+            int offset = (page - 1) * size;
+            // Existing code for fetching weekly appointments from the database
+            List<Meeting> meetings = meetingMapper.findMeetingsForWeek(startTime, endTime, offset, size, sort);
 
-        List<Meeting> meetings = meetingMapper.findMeetingsForWeek(startTime, endTime, offset, size, sort);
+            int totalRows = meetings.size();
+            int totalPage = (int) Math.ceil((double) totalRows / size);
+            boolean hasNextPage = page < totalPage;
+            boolean hasPreviousPage = page > 1;
 
-        // Giả sử bạn đã có logic để tính totalRows
-        int totalRows = meetings.size();
-        int totalPage = (int) Math.ceil((double) totalRows / size);
-        boolean hasNextPage = page < totalPage;
-        boolean hasPreviousPage = page > 1;
-
-        return buildResponseM(meetings, hasNextPage, hasPreviousPage, totalPage, totalRows);
+            return buildResponseM(meetings, hasNextPage, hasPreviousPage, totalPage, totalRows);
+        } catch (Exception e) {
+            // Handle the database error and return an error response
+            return buildErrorResponse("VIEW_WEEKLY_APPOINTMENTS_ERROR", "Error fetching weekly appointments from the database.");
+        }
     }
 
     private JsonObject buildResponseM(List<Meeting> meetings, boolean hasNextPage, boolean hasPreviousPage, int totalPage, int totalRows) {
@@ -118,22 +124,65 @@ public class StudentService {
     public JsonObject bookMeeting(BookMeetingRequest request) {
         JsonObject response = new JsonObject();
         Long meetingId = request.getMeetingId();
+        Long studentId = request.getStudentId();
+        if (meetingId == null || studentId == null) {
+            return buildErrorResponse("INVALID_REQUEST", "Meeting ID or Student ID is null.");
+        }
 
-        meetingMapper.bookMeeting(meetingId);
-        response.addProperty("code", "BOOK_MEETING_CREATED");
+        try {
+            // Check if there are available slots
+            if (!meetingMapper.areSlotsAvailable(meetingId)) {
+                return buildErrorResponse("NO_SLOTS_AVAILABLE", "No slots available for this meeting.");
+            }
 
+            // Book the meeting
+            meetingMapper.bookMeeting(meetingId);
+
+            // Add student as a participant
+            meetingMapper.addMeetingParticipant(meetingId, studentId);
+
+
+            response.addProperty("code", "BOOK_MEETING_SUCCESS");
+            response.addProperty("message", "Meeting successfully booked.");
+        } catch (Exception e) {
+            // Rollback the transaction here if started earlier
+
+            return buildErrorResponse("BOOK_MEETING_ERROR", "Error booking the meeting: " + e.getMessage());
+        }
         return response;
     }
 
+
+
+
     public JsonObject cancelMeeting(CancelMeetingRequest request) {
         JsonObject response = new JsonObject();
+        Long studentId = request.getStudentId();
         Long meetingId = request.getMeetingId();
+        if (meetingId == null || studentId == null) {
+            return buildErrorResponse("INVALID_REQUEST", "Meeting ID or Student ID is null.");
+        }
 
-        meetingMapper.cancelMeeting(meetingId);
+        try {
+            // Remove student as a participant
+            meetingMapper.removeMeetingParticipant(meetingId, studentId);
 
-        response.addProperty("code", "CANCEL_MEETING_OK");
+            // Increase the meeting slot
+            meetingMapper.increaseMeetingSlot(meetingId);
 
+            response.addProperty("code", "CANCEL_MEETING_SUCCESS");
+            response.addProperty("message", "Meeting successfully canceled.");
+        } catch (Exception e) {
+            // Rollback the transaction here if started earlier
 
+            return buildErrorResponse("CANCEL_MEETING_ERROR", "Error canceling the meeting: " + e.getMessage());
+        }
+        return response;
+    }
+    private JsonObject buildErrorResponse(String errorCode, String errorMessage) {
+        JsonObject response = new JsonObject();
+        response.addProperty("code", errorCode);
+        response.addProperty("error", errorMessage);
         return response;
     }
 

@@ -4,14 +4,18 @@
             <transactionManager type="JDBC"/>
             <dataSource type="POOLED">
                 <property name="driver" value="org.postgresql.Driver"/>
-                <property name="url" value="jdbc:postgresql://localhost/yourdatabase"/>
-                <property name="username" value="user"/>
-                <property name="password" value="password"/>
+                <property name="url" value="jdbc:postgresql://localhost/Schedule"/>
+                <property name="username" value="postgres"/>
+                <property name="password" value="123456"/>
             </dataSource>
         </environment>
     </environments>
     <mappers>
         <mapper resource="com/example/UserMapper.xml"/>
-        <!-- Liệt kê các mapper khác ở đây -->
+        <mapper resource="com/example/MeetingMapper.xml"/>
+        <mapper resource="com/example/MeetingParticipantMapper.xml"/>
+        <mapper resource="com/example/UserSessionMapper.xml"/>
+        <mapper resource="com/example/MeetingMinutesMapper.xml"/>
+
     </mappers>
 </configuration>
